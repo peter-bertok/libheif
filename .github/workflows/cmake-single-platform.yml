@@ -1,0 +1,43 @@
+name: CMake Windows x64
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:  
+  build:  
+  
+    runs-on: windows-latest  
+  
+    steps:  
+    - uses: actions/checkout@v3
+  
+    - name: Install Dependencies  
+      run: |  
+        git clone https://github.com/Microsoft/vcpkg.git  
+        cd vcpkg  
+        ./bootstrap-vcpkg.bat  
+        ./vcpkg integrate install  
+        ./vcpkg install libheif  
+        cd ${{ github.workspace }}  
+  
+    - name: Build  
+      run: |  
+        mkdir build  
+        cd build  
+        cmake .. -A x64 -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake  
+        cmake --build . --config Release --verbosity normal  
+  
+    - name: Upload Artifacts  
+      uses: actions/upload-artifact@v2  
+      with:  
+        name: build-x64  
+        path: |  
+          build  
+          build/**/Release/*.exe  
+          build/**/Release/*.dll  
